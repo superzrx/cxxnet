@@ -300,6 +300,21 @@
     <ClInclude Include="..\..\..\mshadow\mshadow-ps\thread_util.h">
       <Filter>mshadow-ps</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\io\image_recordio.h">
+      <Filter>io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\io\inst_vector.h">
+      <Filter>io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\io\iter_csv-inl.hpp">
+      <Filter>io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\io\iter_image_recordio-inl.hpp">
+      <Filter>io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\io\iter_thread_iminst-inl.hpp">
+      <Filter>io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="nnet">

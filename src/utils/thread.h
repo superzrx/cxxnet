@@ -18,16 +18,16 @@ class Semaphore {
  public :
   inline void Init(int init_val) {
     sem = CreateSemaphore(NULL, init_val, 10, NULL);
-    utils::Assert(sem != NULL, "create Semaphore error");
+    mshadow::utils::Assert(sem != NULL, "create Semaphore error");
   }
   inline void Destroy(void) {
     CloseHandle(sem);
   }
   inline void Wait(void) {
-    utils::Assert(WaitForSingleObject(sem, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject error");
+    mshadow::utils::Assert(WaitForSingleObject(sem, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject error");
   }
   inline void Post(void) {
-    utils::Assert(ReleaseSemaphore(sem, 1, NULL)  != 0, "ReleaseSemaphore error");
+    mshadow::utils::Assert(ReleaseSemaphore(sem, 1, NULL) != 0, "ReleaseSemaphore error");
   }
  private:
   HANDLE sem;

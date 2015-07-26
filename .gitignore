@@ -27,3 +27,5 @@ rabit
 *.cache
 *state
 *build
+*.obj
+*.tlog

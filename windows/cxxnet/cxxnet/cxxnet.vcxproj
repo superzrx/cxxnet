@@ -135,12 +135,19 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>D:\7_Runtime\opencv\build\include;D:\1_Workspace\2_dmlc\dmlc-core\include;D:\1_Workspace\2_dmlc\mshadow;D:\1_Workspace\2_dmlc\cxxnet\src;D:\7_Runtime\OpenBLAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DMLC_USE_CXX11=1;_MSC_VER=1800;MSHADOW_RABIT_PS=0;MSHADOW_DIST_PS=0;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opencv_core2410.lib;opencv_imgproc2410.lib;opencv_highgui2410.lib;libopenblas.dll.a;cublas.lib;curand.lib;cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core2410.lib;opencv_imgproc2410.lib;opencv_highgui2410.lib;libopenblas.dll.a;cublas.lib;curand.lib;cudart.lib;dmlc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\7_Runtime\opencv\build\x64\vc12\lib;D:\7_Runtime\OpenBLAS\lib;D:\1_Workspace\2_dmlc\dmlc-core\windows\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -197,14 +204,19 @@
     <ClInclude Include="..\..\..\src\global.h" />
     <ClInclude Include="..\..\..\src\io\data.h" />
     <ClInclude Include="..\..\..\src\io\image_augmenter-inl.hpp" />
+    <ClInclude Include="..\..\..\src\io\image_recordio.h" />
+    <ClInclude Include="..\..\..\src\io\inst_vector.h" />
     <ClInclude Include="..\..\..\src\io\iter_attach_txt-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_augment_proc-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_batch_proc-inl.hpp" />
+    <ClInclude Include="..\..\..\src\io\iter_csv-inl.hpp" />
+    <ClInclude Include="..\..\..\src\io\iter_image_recordio-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_img-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_mem_buffer-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_mnist-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_thread_imbin-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_thread_imbin_x-inl.hpp" />
+    <ClInclude Include="..\..\..\src\io\iter_thread_iminst-inl.hpp" />
     <ClInclude Include="..\..\..\src\layer\activation_layer-inl.hpp" />
     <ClInclude Include="..\..\..\src\layer\batch_norm_layer-inl.hpp" />
     <ClInclude Include="..\..\..\src\layer\bias_layer-inl.hpp" />
