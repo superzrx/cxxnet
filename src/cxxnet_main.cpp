@@ -13,7 +13,9 @@
 #include "nnet/nnet.h"
 #include "io/data.h"
 #include "utils/config.h"
-
+#include "validation/cross_validation.hpp"
+#include <set>
+#include<iostream>
 #if MSHADOW_DIST_PS
 #include "ps.h"
 #endif
@@ -145,6 +147,11 @@ class CXXNetLearnTask {
     if (!strcmp(name, "output_format")) {
       if  (!strcmp(val, "txt")) output_format = 1;
       else output_format = 0;
+    }
+    if (!strcmp(name, "validation")) {
+      std::string value(val);
+      int ind = value.find(':');
+      validations.push_back(std::make_pair<std::string, std::string>(value.substr(0,ind),value.substr(ind+1,value.length()-ind-1)));
     }
     cfg.push_back(std::make_pair(std::string(name), std::string(val)));
   }
@@ -420,6 +427,46 @@ class CXXNetLearnTask {
     printf("finished prediction, write into %s\n", name_pred.c_str());
   }
 
+  virtual std::string PairCrossValidation(IIterator<DataBatch> *iter_eval, const char *data_name) {
+    using namespace std;
+    //mshadow::Shape<3> dshape = mshadow::Shape3(0, 0, 0);
+	  iter_eval->BeforeFirst();
+	  mshadow::TensorContainer<mshadow::cpu, 4> pred;
+    int features_count = 0;
+    vector<vector<real_t> > features;
+    vector<vector<real_t> > labels;
+    while (iter_eval->Next()) {
+      const DataBatch &batch = iter_eval->Value();
+		  if (extract_node_name != ""){
+			  net_trainer->ExtractFeature(&pred, batch, extract_node_name.c_str());
+		  }
+		  else {
+			  utils::Error("extract node name must be specified in task extract_feature.");
+		  }
+		  CHECK(batch.num_batch_padd < batch.batch_size) << "num batch pad must be smaller";
+
+		  mshadow::index_t sz = pred.size(0) - batch.num_batch_padd;
+
+		  for (mshadow::index_t j = 0; j < sz; ++j) {
+        features.resize(features_count+1);
+        labels.resize(features_count + 1);
+			  mshadow::Tensor<mshadow::cpu, 2> d = pred[j].FlatTo2D();
+			  for (mshadow::index_t k = 0; k < d.size(0); ++k) {
+				  for (mshadow::index_t m = 0; m < d.size(1); ++m) {
+            features[features_count].push_back(d[k].dptr_[m]);
+			    }
+          labels[features_count].push_back(batch.label[j][k]);
+			  }
+        features_count++;
+		  }
+	  }
+    size_t fold = 10;
+    real_t precision = CrossValidation(features, labels, fold);
+    std::stringstream ss;
+    ss << "\teval-" << data_name << "-fold" << fold << ":" << precision;
+    return ss.str();
+  }
+
   inline void TaskTrain(void) {
     bool is_root = true;
     bool print_tracker = false;
@@ -445,7 +492,17 @@ class CXXNetLearnTask {
       std::ostringstream os;
       os << '[' << start_counter << ']';
       for (size_t i = 0; i < itr_evals.size(); ++i) {
-        os << net_trainer->Evaluate(itr_evals[i], eval_names[i].c_str());
+        bool is_validation = false;
+        for (size_t j = 0; j < validations.size(); j++){
+          if (eval_names[i] == validations[j].second){
+            
+          }
+        }
+        if (pair_cross_validation.find(eval_names[i]) != pair_cross_validation.end()){
+          os << PairCrossValidation(itr_evals[i], eval_names[i].c_str());
+        } else{
+          os << net_trainer->Evaluate(itr_evals[i], eval_names[i].c_str());
+        }
       }
       os << '\n';
       utils::TrackerPrint(os.str());
@@ -496,7 +553,12 @@ class CXXNetLearnTask {
             os << net_trainer->Evaluate(NULL, "train");
           }
           for (size_t i = 0; i < itr_evals.size(); ++i) {
-            os << net_trainer->Evaluate(itr_evals[i], eval_names[i].c_str());
+            if (pair_cross_validation.find(eval_names[i]) != pair_cross_validation.end()){
+              os << PairCrossValidation(itr_evals[i], eval_names[i].c_str());
+            }
+            else{
+              os << net_trainer->Evaluate(itr_evals[i], eval_names[i].c_str());
+            }
           }
           os << '\n';
           utils::TrackerPrint(os.str());
@@ -538,6 +600,8 @@ class CXXNetLearnTask {
   /*! \brief all the configurations */
   std::vector<std::pair<std::string, std::string> > cfg;
  private:
+  /*! \brief whether do cross validation */
+  std::vector<std::pair<std::string,std::string> > validations;
   /*! \brief whether test io only */
   int test_io;
   /*! \brief  how may samples before print information */

@@ -315,6 +315,12 @@
     <ClInclude Include="..\..\..\src\io\iter_thread_iminst-inl.hpp">
       <Filter>io</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\validation\cross_validation.hpp">
+      <Filter>validation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\validation\distance.hpp">
+      <Filter>validation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="nnet">
@@ -346,6 +352,9 @@
     </Filter>
     <Filter Include="mshadow-ps">
       <UniqueIdentifier>{940b0137-1cfe-4715-81f7-9e97d27e3d04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="validation">
+      <UniqueIdentifier>{44434bdd-bc19-4380-80fd-1a5a1480614c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
