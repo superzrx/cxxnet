@@ -29,3 +29,4 @@ rabit
 *build
 *.obj
 *.tlog
+*.exe

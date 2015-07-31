@@ -7,7 +7,7 @@
 
 #include <dmlc/base.h>
 #include <dmlc/io.h>
-
+#include <cstdint>
 namespace cxxnet {
 /*! \brief image recordio struct */
 struct ImageRecordIO {
