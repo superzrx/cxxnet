@@ -1,9 +1,10 @@
-#ifndef CXXNET_DISTANCE_
-#define CXXNET_DISTANCE_
+#ifndef VALIDATION_DISTANCE_
+#define VALIDATION_DISTANCE_
 #include<vector>
 #include<cmath>
 #include<iostream>
 #include"global.h"
+
 
 inline cxxnet::real_t DotProduct(const std::vector<cxxnet::real_t>& feature1, const std::vector<cxxnet::real_t>& feature2){
 	cxxnet::real_t ret = 0;

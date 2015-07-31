@@ -13,7 +13,7 @@
 #include "nnet/nnet.h"
 #include "io/data.h"
 #include "utils/config.h"
-#include "validation/cross_validation.hpp"
+#include "validation/validation.hpp"
 #include <set>
 #include<iostream>
 #if MSHADOW_DIST_PS
@@ -149,9 +149,15 @@ class CXXNetLearnTask {
       else output_format = 0;
     }
     if (!strcmp(name, "validation")) {
-      std::string value(val);
+      std::string value(val),validation_node,validation_type;
       int ind = value.find(':');
-      validations.push_back(std::make_pair<std::string, std::string>(value.substr(0,ind),value.substr(ind+1,value.length()-ind-1)));
+      validation_node = value.substr(0, ind);
+      validation_type = value.substr(ind + 1, value.length() - ind - 1);
+      for (int i = 0; i < validation_types_count; i++){
+        if (validation_type == validation_types[i]){
+          validations.push_back(std::pair<std::string, std::string>(validation_node, validation_type));
+        }
+      }
     }
     cfg.push_back(std::make_pair(std::string(name), std::string(val)));
   }
@@ -427,7 +433,7 @@ class CXXNetLearnTask {
     printf("finished prediction, write into %s\n", name_pred.c_str());
   }
 
-  virtual std::string PairCrossValidation(IIterator<DataBatch> *iter_eval, const char *data_name) {
+  virtual std::string Validation(IIterator<DataBatch> *iter_eval, const char *data_name,const std::string& validation_type) {
     using namespace std;
     //mshadow::Shape<3> dshape = mshadow::Shape3(0, 0, 0);
 	  iter_eval->BeforeFirst();
@@ -460,10 +466,8 @@ class CXXNetLearnTask {
         features_count++;
 		  }
 	  }
-    size_t fold = 10;
-    real_t precision = CrossValidation(features, labels, fold);
     std::stringstream ss;
-    ss << "\teval-" << data_name << "-fold" << fold << ":" << precision;
+    ss << "\teval-" << data_name << ValidationFunction(features, labels, validation_type);
     return ss.str();
   }
 
@@ -495,12 +499,10 @@ class CXXNetLearnTask {
         bool is_validation = false;
         for (size_t j = 0; j < validations.size(); j++){
           if (eval_names[i] == validations[j].second){
-            
+            os << Validation(itr_evals[i], eval_names[i].c_str());
           }
         }
-        if (pair_cross_validation.find(eval_names[i]) != pair_cross_validation.end()){
-          os << PairCrossValidation(itr_evals[i], eval_names[i].c_str());
-        } else{
+        if (!is_validation){
           os << net_trainer->Evaluate(itr_evals[i], eval_names[i].c_str());
         }
       }
@@ -553,10 +555,13 @@ class CXXNetLearnTask {
             os << net_trainer->Evaluate(NULL, "train");
           }
           for (size_t i = 0; i < itr_evals.size(); ++i) {
-            if (pair_cross_validation.find(eval_names[i]) != pair_cross_validation.end()){
-              os << PairCrossValidation(itr_evals[i], eval_names[i].c_str());
+            bool is_validation = false;
+            for (size_t j = 0; j < validations.size(); j++){
+              if (eval_names[i] == validations[j].second){
+                os << Validation(itr_evals[i], eval_names[i].c_str());
+              }
             }
-            else{
+            if (!is_validation){
               os << net_trainer->Evaluate(itr_evals[i], eval_names[i].c_str());
             }
           }
