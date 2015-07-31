@@ -254,7 +254,7 @@ ParseNext(std::vector<InstVector> *out_vec) {
         //cv::imshow("3", ress[3]);
         //cv::waitKey(-1);
         DataInst inst = out.Back();
-        for (int k = 0; k < ress.size(); k++){
+        for (size_t k = 0; k < ress.size(); k++){
           for (int i = 0; i < ress[k].rows; ++i) {
             for (int j = 0; j < ress[k].cols; ++j) {
               cv::Vec3b bgr = ress[k].at<cv::Vec3b>(i, j);

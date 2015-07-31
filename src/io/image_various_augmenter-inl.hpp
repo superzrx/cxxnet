@@ -145,7 +145,7 @@ class ImageVariousAugmenter:public ImageAugmenter {
         }
       }
       else{
-        int shape_1, shape_2;
+        size_t shape_1, shape_2;
         if (pre_size_width_ == -1 || pre_size_height_ == -1){
           shape_1 = shape_[1];
           shape_2 = shape_[2];
