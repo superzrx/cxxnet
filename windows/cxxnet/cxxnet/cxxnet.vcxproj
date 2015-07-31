@@ -49,6 +49,7 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <UseIntelMKL>Parallel</UseIntelMKL>
+    <UseILP64Interfaces>true</UseILP64Interfaces>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -71,6 +72,7 @@
     <IncludePath>$(SolutionDir)\..\thirdparty\OpenCV\include;$(SolutionDir)\..\thirdparty\OpenBLAS\include;$(SolutionDir)\..\..\mshadow;$(IncludePath)</IncludePath>
     <LibraryPath>$(CUDA_PATH)lib\x64\;$(SolutionDir)\..\thirdparty\OpenBLAS\bin\;$(SolutionDir)\..\thirdparty\OpenBLAS\lib\;$(SolutionDir)\..\thirdparty\OpenCV\x64\vc12\lib\;$(LibraryPath)</LibraryPath>
     <OutDir>..\..\..\bin\</OutDir>
+    <TargetName>$(ProjectName)_debug</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)\..\thirdparty\OpenCV\include;$(SolutionDir)\..\thirdparty\OpenBLAS\include;$(SolutionDir)\..\..\mshadow;$(IncludePath)</IncludePath>
@@ -92,7 +94,9 @@
       <WarningLevel>Level1</WarningLevel>
       <Optimization>Full</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalOptions>/DMSHADOW_USE_CBLAS=1 /DMSHADOW_USE_MKL=0 /DCXXNET_USE_OPENCV=1 /DCXXNET_USE_CUDNN=0 /DCXXNET_USE_OPENCV_DECODER=1 /DMSHADOW_DIST_PS=0 /D__WIN__=1 /D_USE_MATH_DEFINES %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>D:\7_Runtime\opencv\build\include;D:\1_Workspace\2_dmlc\dmlc-core\include;D:\1_Workspace\2_dmlc\cxxnet\mshadow;D:\1_Workspace\2_dmlc\cxxnet\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DMLC_USE_CXX11=1;_MSC_VER=1800;MSHADOW_RABIT_PS=0;MSHADOW_DIST_PS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/DMSHADOW_USE_CBLAS=0 /DMSHADOW_USE_MKL=1 /DCXXNET_USE_OPENCV=1 /DCXXNET_USE_CUDNN=0 /DCXXNET_USE_OPENCV_DECODER=1 /DMSHADOW_DIST_PS=0 /D__WIN__=1 /D_USE_MATH_DEFINES %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -101,12 +105,14 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_core2410.lib;opencv_imgproc2410.lib;opencv_highgui2410.lib;libopenblas.dll.a;cublas.lib;curand.lib;cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core2410.lib;opencv_imgproc2410.lib;opencv_highgui2410.lib;cublas.lib;curand.lib;cudart.lib;dmlc.lib;%(AdditionalDependencies)
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\7_Runtime\opencv\build\x64\vc12\lib;D:\1_Workspace\2_dmlc\dmlc-core\windows\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
-      <AdditionalOptions>-DMSHADOW_USE_CBLAS=1 -DMSHADOW_USE_MKL=0 -DCXXNET_USE_OPENCV=1 -DCXXNET_USE_CUDNN=0 -DCXXNET_USE_OPENCV_DECODER=1 -DMSHADOW_DIST_PS=0 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-DMSHADOW_USE_CBLAS=0 -DMSHADOW_USE_MKL=1 -DCXXNET_USE_OPENCV=1 -DCXXNET_USE_CUDNN=0 -DCXXNET_USE_OPENCV_DECODER=1 -DMSHADOW_DIST_PS=0 %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
     <CudaLink />
   </ItemDefinitionGroup>
@@ -131,12 +137,12 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalOptions>/DMSHADOW_USE_CBLAS=1 /DMSHADOW_USE_MKL=0 /DCXXNET_USE_OPENCV=1 /DCXXNET_USE_CUDNN=0 /DCXXNET_USE_OPENCV_DECODER=1 /DMSHADOW_DIST_PS=0 /D__WIN__=1 /D_USE_MATH_DEFINES %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DMSHADOW_USE_CBLAS=0 /DMSHADOW_USE_MKL=1 /DCXXNET_USE_OPENCV=1 /DCXXNET_USE_CUDNN=0 /DCXXNET_USE_OPENCV_DECODER=1 /DMSHADOW_DIST_PS=0 /D__WIN__=1 /D_USE_MATH_DEFINES %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalIncludeDirectories>D:\7_Runtime\opencv\build\include;D:\1_Workspace\2_dmlc\dmlc-core\include;D:\1_Workspace\2_dmlc\mshadow;D:\1_Workspace\2_dmlc\cxxnet\src;D:\7_Runtime\OpenBLAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\7_Runtime\opencv\build\include;D:\1_Workspace\2_dmlc\dmlc-core\include;D:\1_Workspace\2_dmlc\cxxnet\mshadow;D:\1_Workspace\2_dmlc\cxxnet\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DMLC_USE_CXX11=1;_MSC_VER=1800;MSHADOW_RABIT_PS=0;MSHADOW_DIST_PS=0;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
@@ -153,7 +159,7 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
-      <AdditionalOptions>-DMSHADOW_USE_CBLAS=1 -DMSHADOW_USE_MKL=0 -DCXXNET_USE_OPENCV=1 -DCXXNET_USE_CUDNN=0 -DCXXNET_USE_OPENCV_DECODER=1 -DMSHADOW_DIST_PS=0 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-DMSHADOW_USE_CBLAS=0 -DMSHADOW_USE_MKL=1 -DCXXNET_USE_OPENCV=1 -DCXXNET_USE_CUDNN=0 -DCXXNET_USE_OPENCV_DECODER=1 -DMSHADOW_DIST_PS=0 %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
     <CudaLink />
   </ItemDefinitionGroup>
