@@ -248,6 +248,11 @@ ParseNext(std::vector<InstVector> *out_vec) {
         out.Push(static_cast<unsigned>(rec.image_index()),
           mshadow::Shape3(ress.size() * 3, ress[0].rows, ress[0].cols),
           mshadow::Shape1(label_width_));
+        //cv::imshow("0", ress[0]);
+        //cv::imshow("1", ress[1]);
+        //cv::imshow("2", ress[2]);
+        //cv::imshow("3", ress[3]);
+        //cv::waitKey(-1);
         DataInst inst = out.Back();
         for (int k = 0; k < ress.size(); k++){
           for (int i = 0; i < ress[k].rows; ++i) {
@@ -303,10 +308,11 @@ class ImageRecordIOIterator : public IIterator<DataInst> {
     rnd_.Seed(kRandMagic);
     shuffle_ = 0;
     various_augment_=various_augment;
-    parser_ = new ImageRecordIOParser(true);
+    parser_ = new ImageRecordIOParser(true,1);
   }
   virtual ~ImageRecordIOIterator(void) {
     iter_.Destroy();
+    delete parser_;
     // data can be NULL
     delete data_;
   }
