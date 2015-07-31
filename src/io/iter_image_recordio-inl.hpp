@@ -20,6 +20,7 @@ iterator
 #include "./inst_vector.h"
 #include "./image_recordio.h"
 #include "./image_augmenter-inl.hpp"
+#include "./image_various_augmenter-inl.hpp"
 #include "../utils/decoder.h"
 #include "../utils/random.h"
 namespace cxxnet {
@@ -91,10 +92,11 @@ class ImageLabelMap {
 // parser to parse image recordio
 class ImageRecordIOParser {
  public:
-  ImageRecordIOParser(int nthread = 4)
+  ImageRecordIOParser(bool various_augment=false,int nthread = 4)
       : nthread_(nthread),
         source_(NULL),
         label_map_(NULL) {
+    various_augment_ = various_augment;
     silent_ = 0;
     dist_num_worker_ = 1;
     dist_worker_rank_ = 0;
@@ -112,7 +114,12 @@ class ImageRecordIOParser {
     nthread_ = nthread;
     // setup decoders
     for (int i = 0; i < nthread; ++i) {
-      augmenters_.push_back(new ImageAugmenter());
+      if (various_augment){
+        augmenters_.push_back(new ImageVariousAugmenter());
+      }
+      else{
+        augmenters_.push_back(new ImageAugmenter());
+      }
       prnds_.push_back(new utils::RandomSampler());
       prnds_[i]->Seed((i + 1) * kRandMagic);
     }
@@ -141,6 +148,7 @@ class ImageRecordIOParser {
   // instance vector to the user
   inline bool ParseNext(std::vector<InstVector> *out);
  private:
+   bool various_augment_;
   // magic nyumber to see prng
   static const int kRandMagic = 111;
   /*! \brief whether to remain silent */
@@ -234,25 +242,54 @@ ParseNext(std::vector<InstVector> *out_vec) {
       rec.Load(blob.dptr, blob.size);
       cv::Mat buf(1, rec.content_size, CV_8U, rec.content);
       res = cv::imdecode(buf, 1);
-      res = augmenters_[tid]->Process(res, prnds_[tid]);
-      out.Push(static_cast<unsigned>(rec.image_index()),
-               mshadow::Shape3(3, res.rows, res.cols),
-               mshadow::Shape1(label_width_));
-      DataInst inst = out.Back();
-      for (int i = 0; i < res.rows; ++i) {
-        for (int j = 0; j < res.cols; ++j) {
-          cv::Vec3b bgr = res.at<cv::Vec3b>(i, j);
-          inst.data[0][i][j] = bgr[2];
-          inst.data[1][i][j] = bgr[1];
-          inst.data[2][i][j] = bgr[0];
+      if (various_augment_){
+        std::vector<cv::Mat> ress;
+        ((ImageVariousAugmenter*)augmenters_[tid])->Process(res, ress, prnds_[tid]);
+        out.Push(static_cast<unsigned>(rec.image_index()),
+          mshadow::Shape3(ress.size() * 3, ress[0].rows, ress[0].cols),
+          mshadow::Shape1(label_width_));
+        DataInst inst = out.Back();
+        for (int k = 0; k < ress.size(); k++){
+          for (int i = 0; i < ress[k].rows; ++i) {
+            for (int j = 0; j < ress[k].cols; ++j) {
+              cv::Vec3b bgr = ress[k].at<cv::Vec3b>(i, j);
+              inst.data[k * 3 + 0][i][j] = bgr[2];
+              inst.data[k * 3 + 1][i][j] = bgr[1];
+              inst.data[k * 3 + 2][i][j] = bgr[0];
+            }
+          }
         }
+        if (label_map_ != NULL) {
+          mshadow::Copy(inst.label, label_map_->Find(rec.image_index()));
+        }
+        else {
+          inst.label[0] = rec.header.label;
+        }
+        res.release();
+        ress.clear();
       }
-      if (label_map_ != NULL) {
-        mshadow::Copy(inst.label, label_map_->Find(rec.image_index()));
-      } else {
-        inst.label[0] = rec.header.label;
+      else{
+        res = augmenters_[tid]->Process(res, prnds_[tid]);
+        out.Push(static_cast<unsigned>(rec.image_index()),
+          mshadow::Shape3(3, res.rows, res.cols),
+          mshadow::Shape1(label_width_));
+        DataInst inst = out.Back();
+        for (int i = 0; i < res.rows; ++i) {
+          for (int j = 0; j < res.cols; ++j) {
+            cv::Vec3b bgr = res.at<cv::Vec3b>(i, j);
+            inst.data[0][i][j] = bgr[2];
+            inst.data[1][i][j] = bgr[1];
+            inst.data[2][i][j] = bgr[0];
+          }
+        }
+        if (label_map_ != NULL) {
+          mshadow::Copy(inst.label, label_map_->Find(rec.image_index()));
+        }
+        else {
+          inst.label[0] = rec.header.label;
+        }
+        res.release();
       }
-      res.release();
     }
   }
   return true;
@@ -261,10 +298,12 @@ ParseNext(std::vector<InstVector> *out_vec) {
 // iterator on image recordio
 class ImageRecordIOIterator : public IIterator<DataInst> {
  public:
-  ImageRecordIOIterator()
+  ImageRecordIOIterator(bool various_augment=false)
       : data_(NULL) {
     rnd_.Seed(kRandMagic);
     shuffle_ = 0;
+    various_augment_=various_augment;
+    parser_ = new ImageRecordIOParser(true);
   }
   virtual ~ImageRecordIOIterator(void) {
     iter_.Destroy();
@@ -272,7 +311,7 @@ class ImageRecordIOIterator : public IIterator<DataInst> {
     delete data_;
   }
   virtual void SetParam(const char *name, const char *val) {
-    parser_.SetParam(name, val);
+    parser_->SetParam(name, val);
     if (!strcmp(name, "seed_data")) {
       rnd_.Seed(atoi(val) + kRandMagic);
     }
@@ -281,15 +320,15 @@ class ImageRecordIOIterator : public IIterator<DataInst> {
     }
   }
   virtual void Init(void) {
-    parser_.Init();
+    parser_->Init();
     iter_.set_max_capacity(4);
     iter_.Init([this](std::vector<InstVector> **dptr) {
         if (*dptr == NULL) {
           *dptr = new std::vector<InstVector>();
         }
-        return parser_.ParseNext(*dptr);
+        return parser_->ParseNext(*dptr);
       },
-      [this]() { parser_.BeforeFirst(); });
+        [this]() { parser_->BeforeFirst(); });
     inst_ptr_ = 0;
   }
   virtual void BeforeFirst(void) {
@@ -328,6 +367,7 @@ class ImageRecordIOIterator : public IIterator<DataInst> {
   }
 
  private:
+   bool various_augment_;
   // random magic
   static const int kRandMagic = 111;
   // output instance
@@ -343,7 +383,7 @@ class ImageRecordIOIterator : public IIterator<DataInst> {
   // data
   std::vector<InstVector> *data_;
   // internal parser
-  ImageRecordIOParser parser_;
+  ImageRecordIOParser* parser_;
   // backend thread
   dmlc::ThreadedIter<std::vector<InstVector> > iter_;
 };

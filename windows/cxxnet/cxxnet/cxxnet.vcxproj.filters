@@ -318,9 +318,6 @@
     <ClInclude Include="..\..\..\src\io\image_various_augmenter-inl.hpp">
       <Filter>io</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\io\iter_image_va_recordio-inl.hpp">
-      <Filter>io</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="nnet">

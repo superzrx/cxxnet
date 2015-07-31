@@ -219,7 +219,6 @@
     <ClInclude Include="..\..\..\src\io\iter_batch_proc-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_csv-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_image_recordio-inl.hpp" />
-    <ClInclude Include="..\..\..\src\io\iter_image_va_recordio-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_img-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_mem_buffer-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_mnist-inl.hpp" />

@@ -21,7 +21,6 @@
 #include "iter_thread_iminst-inl.hpp"
 #include "iter_img-inl.hpp"
 #include "iter_image_recordio-inl.hpp"
-#include "iter_image_va_recordio-inl.hpp"
 #endif
 
 namespace cxxnet {
@@ -40,6 +39,11 @@ IIterator<DataBatch> *CreateIterator(const std::vector< std::pair<std::string, s
       if (!strcmp(val, "imgbinold")) {
         CHECK(it == NULL) << "image binary can not chain over other iterator";
         it = new BatchAdaptIterator(new AugmentIterator(new ThreadImagePageIterator()));
+        continue;
+      }
+      if (!strcmp(val, "imgrecv")) {
+        CHECK(it == NULL) << "image recordio can not chain over other iterator";
+        it = new BatchAdaptIterator(new AugmentIterator(new ImageRecordIOIterator(true), 1));
         continue;
       }
       if (!strcmp(val, "imgrec")) {
