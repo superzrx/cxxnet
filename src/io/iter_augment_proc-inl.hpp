@@ -15,6 +15,7 @@
 
 #if CXXNET_USE_OPENCV
 #include "./image_augmenter-inl.hpp"
+#include "./image_various_augmenter-inl.hpp"
 #endif
 
 namespace cxxnet {

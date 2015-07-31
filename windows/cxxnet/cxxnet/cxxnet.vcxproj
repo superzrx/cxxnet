@@ -212,12 +212,14 @@
     <ClInclude Include="..\..\..\src\io\data.h" />
     <ClInclude Include="..\..\..\src\io\image_augmenter-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\image_recordio.h" />
+    <ClInclude Include="..\..\..\src\io\image_various_augmenter-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\inst_vector.h" />
     <ClInclude Include="..\..\..\src\io\iter_attach_txt-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_augment_proc-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_batch_proc-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_csv-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_image_recordio-inl.hpp" />
+    <ClInclude Include="..\..\..\src\io\iter_image_va_recordio-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_img-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_mem_buffer-inl.hpp" />
     <ClInclude Include="..\..\..\src\io\iter_mnist-inl.hpp" />

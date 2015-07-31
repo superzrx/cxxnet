@@ -21,6 +21,7 @@
 #include "iter_thread_iminst-inl.hpp"
 #include "iter_img-inl.hpp"
 #include "iter_image_recordio-inl.hpp"
+#include "iter_image_va_recordio-inl.hpp"
 #endif
 
 namespace cxxnet {
