@@ -153,7 +153,6 @@ class CXXNetLearnTask {
       int ind1 = value.find(':'), ind2 = value.rfind(':');;
       validation_node = value.substr(0, ind1);
       validation_iter = value.substr(ind1 + 1, ind2 - ind1 - 1);
-      
       validation_type = value.substr(ind2 + 1, value.length() - ind2 - 1);
       std::cout << validation_node << " " << validation_iter << " " << validation_type << std::endl;
       for (int i = 0; i < validation_types_count; i++){
@@ -475,7 +474,9 @@ class CXXNetLearnTask {
 	  }
     std::stringstream ss;
     ss << "\teval-" << data_name << ValidationFunction(features, labels, validations[validation_index][2]);
-    return ss.str();
+    std::string ret;
+    ss >> ret;
+    return ret;
   }
 
   inline void TaskTrain(void) {

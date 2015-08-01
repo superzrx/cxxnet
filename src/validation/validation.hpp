@@ -11,11 +11,13 @@ size_t fold;
 std::string ValidationFunction(const std::vector<std::vector<cxxnet::real_t> >& features, const std::vector<std::vector<cxxnet::real_t> >&labels, const std::string& validation_type){
   using namespace std;
   stringstream ss;
+  string ret;
   if (validation_type == "pairwise_cross"){
     size_t fold = 10;
     cxxnet::real_t precision = PairwiseCrossValidation(features, labels, fold);
     std::stringstream ss;
-    ss << "-pairwize-" << fold << ":" << precision;
+    ss << "-pairwize-" << fold << ":" << precision; 
+    ss >> ret;
   }
   else if (validation_type == "closedset_recognition"){
     cxxnet::real_t max_far,tpr_100,tpr_1000,tpr_10000;
@@ -27,6 +29,7 @@ std::string ValidationFunction(const std::vector<std::vector<cxxnet::real_t> >& 
     tpr_1000 = ClosedsetRecognitionValidation(features, labels, max_far);
     std::stringstream ss;
     ss << "-closedset:" << tpr_100<<"|"<<tpr_1000<<"|"<<tpr_10000;
+    ss >> ret;
   }
-  return ss.str();
+  return ret;
 }

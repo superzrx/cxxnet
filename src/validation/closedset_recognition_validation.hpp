@@ -10,7 +10,7 @@ cxxnet::real_t ClosedsetRecognitionValidation(const std::vector<std::vector<cxxn
   vector<vector<cxxnet::real_t> > gallery_features, probe_features;
   vector<cxxnet::real_t> gallery_labels,probe_labels;
   for (size_t i = 0; i < features.size(); i++){
-    if (labels[i][0] > 1000){//gallery
+    if (labels[i][0] >= 1000){//gallery
       gallery_features.push_back(features[i]);
       gallery_labels.push_back(labels[i][0] - 1000);
     }
@@ -27,6 +27,7 @@ cxxnet::real_t ClosedsetRecognitionValidation(const std::vector<std::vector<cxxn
       pair_labels.push_back((gallery_labels[i] == probe_labels[j]));
     }
   }
+  //cout << "probe" << probe_features.size() << " gallery:" << gallery_features.size() << endl;
   cxxnet::real_t threshold,tpr;
   GetThreshold(distances, pair_labels, max_far, &threshold);
   int tp, tn, fp, fn;
