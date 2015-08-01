@@ -5,7 +5,6 @@
 #include<iostream>
 #include"utils.hpp"
 #include"distance.hpp"
-#include"global.h"
 cxxnet::real_t PairwiseCrossValidation(const std::vector<std::vector<cxxnet::real_t> >& features, const std::vector<std::vector<cxxnet::real_t> >&label, size_t fold){
 	using namespace std;
 	vector<cxxnet::real_t> distances;

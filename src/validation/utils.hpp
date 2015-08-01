@@ -4,7 +4,7 @@
 #include<cmath>
 #include<iostream>
 #include<algorithm>
-#include"global.h"
+#include"../global.h"
 cxxnet::real_t MaxValue(const std::vector<cxxnet::real_t>& feature){
   cxxnet::real_t maxVal = feature[0];
   for (size_t i = 0; i < feature.size(); i++){

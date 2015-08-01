@@ -3,7 +3,7 @@
 #include<vector>
 #include<cmath>
 #include<iostream>
-#include"global.h"
+#include"../global.h"
 
 
 inline cxxnet::real_t DotProduct(const std::vector<cxxnet::real_t>& feature1, const std::vector<cxxnet::real_t>& feature2){

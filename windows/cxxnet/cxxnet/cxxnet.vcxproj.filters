@@ -315,7 +315,16 @@
     <ClInclude Include="..\..\..\src\io\iter_thread_iminst-inl.hpp">
       <Filter>io</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\validation\cross_validation.hpp">
+    <ClInclude Include="..\..\..\src\validation\closedset_recognition_validation.hpp">
+      <Filter>validation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\validation\pairwise_cross_validation.hpp">
+      <Filter>validation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\validation\utils.hpp">
+      <Filter>validation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\validation\validation.hpp">
       <Filter>validation</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\validation\distance.hpp">

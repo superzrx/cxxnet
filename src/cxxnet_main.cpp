@@ -149,13 +149,20 @@ class CXXNetLearnTask {
       else output_format = 0;
     }
     if (!strcmp(name, "validation")) {
-      std::string value(val),validation_node,validation_type;
+      std::string value(val),validation_node,validation_type,validation_iter;
       int ind = value.find(':');
       validation_node = value.substr(0, ind);
+      validation_iter = value.substr(ind + 1, value.length() - ind - 1);
+      ind = value.find(ind+1,':');
       validation_type = value.substr(ind + 1, value.length() - ind - 1);
+      std::cout << validation_node << " " << validation_iter << " " << validation_type << std::endl;
       for (int i = 0; i < validation_types_count; i++){
         if (validation_type == validation_types[i]){
-          validations.push_back(std::pair<std::string, std::string>(validation_node, validation_type));
+          std::vector<std::string> vec;
+          vec.push_back(validation_node);
+          vec.push_back(validation_iter);
+          vec.push_back(validation_type);
+          validations.push_back(vec);
         }
       }
     }
@@ -433,7 +440,7 @@ class CXXNetLearnTask {
     printf("finished prediction, write into %s\n", name_pred.c_str());
   }
 
-  virtual std::string Validation(IIterator<DataBatch> *iter_eval, const char *data_name,const std::string& validation_type) {
+  virtual std::string Validation(IIterator<DataBatch> *iter_eval, const char *data_name,int validation_index) {
     using namespace std;
     //mshadow::Shape<3> dshape = mshadow::Shape3(0, 0, 0);
 	  iter_eval->BeforeFirst();
@@ -443,8 +450,8 @@ class CXXNetLearnTask {
     vector<vector<real_t> > labels;
     while (iter_eval->Next()) {
       const DataBatch &batch = iter_eval->Value();
-		  if (extract_node_name != ""){
-			  net_trainer->ExtractFeature(&pred, batch, extract_node_name.c_str());
+		  if (validations[validation_index][0] != ""){
+        net_trainer->ExtractFeature(&pred, batch, validations[validation_index][0].c_str());
 		  }
 		  else {
 			  utils::Error("extract node name must be specified in task extract_feature.");
@@ -467,7 +474,7 @@ class CXXNetLearnTask {
 		  }
 	  }
     std::stringstream ss;
-    ss << "\teval-" << data_name << ValidationFunction(features, labels, validation_type);
+    ss << "\teval-" << data_name << ValidationFunction(features, labels, validations[validation_index][2]);
     return ss.str();
   }
 
@@ -498,8 +505,8 @@ class CXXNetLearnTask {
       for (size_t i = 0; i < itr_evals.size(); ++i) {
         bool is_validation = false;
         for (size_t j = 0; j < validations.size(); j++){
-          if (eval_names[i] == validations[j].second){
-            os << Validation(itr_evals[i], eval_names[i].c_str());
+          if (eval_names[i] == validations[j][1]){
+            os << Validation(itr_evals[i], eval_names[i].c_str(), j);
           }
         }
         if (!is_validation){
@@ -557,8 +564,8 @@ class CXXNetLearnTask {
           for (size_t i = 0; i < itr_evals.size(); ++i) {
             bool is_validation = false;
             for (size_t j = 0; j < validations.size(); j++){
-              if (eval_names[i] == validations[j].second){
-                os << Validation(itr_evals[i], eval_names[i].c_str());
+              if (eval_names[i] == validations[j][1]){
+                os << Validation(itr_evals[i], eval_names[i].c_str(),j);
               }
             }
             if (!is_validation){
@@ -606,7 +613,7 @@ class CXXNetLearnTask {
   std::vector<std::pair<std::string, std::string> > cfg;
  private:
   /*! \brief whether do cross validation */
-  std::vector<std::pair<std::string,std::string> > validations;
+  std::vector<std::vector<std::string> > validations;
   /*! \brief whether test io only */
   int test_io;
   /*! \brief  how may samples before print information */

@@ -272,8 +272,11 @@
     <ClInclude Include="..\..\..\src\utils\thread_buffer.h" />
     <ClInclude Include="..\..\..\src\utils\timer.h" />
     <ClInclude Include="..\..\..\src\utils\utils.h" />
-    <ClInclude Include="..\..\..\src\validation\cross_validation.hpp" />
+    <ClInclude Include="..\..\..\src\validation\closedset_recognition_validation.hpp" />
     <ClInclude Include="..\..\..\src\validation\distance.hpp" />
+    <ClInclude Include="..\..\..\src\validation\pairwise_cross_validation.hpp" />
+    <ClInclude Include="..\..\..\src\validation\utils.hpp" />
+    <ClInclude Include="..\..\..\src\validation\validation.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\mshadow\mshadow\cuda\reduce.cuh" />

@@ -5,7 +5,6 @@
 #include<iostream>
 #include"utils.hpp"
 #include"distance.hpp"
-#include"global.h"
 cxxnet::real_t ClosedsetRecognitionValidation(const std::vector<std::vector<cxxnet::real_t> >& features, const std::vector<std::vector<cxxnet::real_t> >&labels,cxxnet::real_t max_far){
   using namespace std;
   vector<vector<cxxnet::real_t> > gallery_features, probe_features;

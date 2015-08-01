@@ -2,7 +2,6 @@
 #include<sstream>
 #include"pairwise_cross_validation.hpp"
 #include"closedset_recognition_validation.hpp"
-#include"global.h"
 const int validation_types_count = 2;
 const std::string validation_types[] = {
   "pairwise_cross",
