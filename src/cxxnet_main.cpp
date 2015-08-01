@@ -150,11 +150,11 @@ class CXXNetLearnTask {
     }
     if (!strcmp(name, "validation")) {
       std::string value(val),validation_node,validation_type,validation_iter;
-      int ind = value.find(':');
-      validation_node = value.substr(0, ind);
-      validation_iter = value.substr(ind + 1, value.length() - ind - 1);
-      ind = value.find(ind+1,':');
-      validation_type = value.substr(ind + 1, value.length() - ind - 1);
+      int ind1 = value.find(':'), ind2 = value.rfind(':');;
+      validation_node = value.substr(0, ind1);
+      validation_iter = value.substr(ind1 + 1, ind2 - ind1 - 1);
+      
+      validation_type = value.substr(ind2 + 1, value.length() - ind2 - 1);
       std::cout << validation_node << " " << validation_iter << " " << validation_type << std::endl;
       for (int i = 0; i < validation_types_count; i++){
         if (validation_type == validation_types[i]){

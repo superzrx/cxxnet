@@ -33,7 +33,7 @@ cxxnet::real_t PairwiseCrossValidation(const std::vector<std::vector<cxxnet::rea
 		}
     cxxnet::real_t threshold, accuracy; 
     int tp, tn, fp, fn;
-    GetThreshold(train_distances, train_pair_labels,-1,&accuracy);
+    GetThreshold(train_distances, train_pair_labels,-1,&threshold);
 		GetTpAndTn(test_distances, test_pair_labels, threshold,&tp,&tn,&fp,&fn);
     accuracy = (tp + tn)*1.0 / test_pair_labels.size();
     sum_accuracy += accuracy;

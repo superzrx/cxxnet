@@ -24,6 +24,7 @@ void inline GetTpAndTn(const std::vector<cxxnet::real_t>& distances, const std::
   for (size_t i = 0; i<distances.size(); i++){
     using namespace std;
     //cout <<"abc "<< distances[i] << " " << pair_labels[i] << endl;
+    *tp = 0, *tn = 0, *fp = 0, *fn = 0;
     if (distances[i]>threshold){
       if (pair_labels[i])(*tp)++;
       else (*fp)++;
