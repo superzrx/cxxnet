@@ -239,6 +239,7 @@
     <ClInclude Include="..\..\..\src\layer\insanity_pooling_layer-inl.hpp" />
     <ClInclude Include="..\..\..\src\layer\layer.h" />
     <ClInclude Include="..\..\..\src\layer\layer_impl-inl.hpp" />
+    <ClInclude Include="..\..\..\src\layer\locally_connected_layer-inl.hpp" />
     <ClInclude Include="..\..\..\src\layer\loss\l2_loss_layer-inl.hpp" />
     <ClInclude Include="..\..\..\src\layer\loss\loss_layer_base-inl.hpp" />
     <ClInclude Include="..\..\..\src\layer\loss\multi_logistic_layer-inl.hpp" />

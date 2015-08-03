@@ -315,6 +315,9 @@
     <ClInclude Include="..\..\..\src\io\iter_thread_iminst-inl.hpp">
       <Filter>io</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\layer\locally_connected_layer-inl.hpp">
+      <Filter>layer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="nnet">

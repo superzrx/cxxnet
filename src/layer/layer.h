@@ -313,6 +313,8 @@ const int kPRelu = 29;
 const int kBatchNorm = 30;
 const int kFixConnect = 31;
 const int kBatchNorm_no_ma = 32;
+
+const int kLocallyConnected = 704;
 /*! \brief gap used to encode pairtest layer */
 const int kPairTestGap = 1024;
 /*! \brief use integer to encode layer types */

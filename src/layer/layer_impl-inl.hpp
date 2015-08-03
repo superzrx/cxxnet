@@ -25,6 +25,7 @@
 #include "./insanity_pooling_layer-inl.hpp"
 #include "./prelu_layer-inl.hpp"
 #include "./batch_norm_layer-inl.hpp"
+#include "./locally_connected_layer-inl.hpp"
 #include "./loss/softmax_layer-inl.hpp"
 #include "./loss/lp_loss_layer-inl.hpp"
 #include "./loss/multi_logistic_layer-inl.hpp"
@@ -67,6 +68,7 @@ ILayer<xpu>* CreateLayer_(LayerType type,
     case kPRelu: return new PReluLayer<xpu>(p_rnd);
     case kBatchNorm: return new BatchNormLayer<xpu, true>(p_rnd);
     case kBatchNorm_no_ma: return new BatchNormLayer<xpu, false>(p_rnd);
+    case kLocallyConnected: return new LocallyConnectedLayer<xpu>(p_rnd);
     case kLpLoss: return new LpLossLayer<xpu>(label_info);
     case kMultiLogistic: return new MultiLogisticLayer<xpu>(label_info);
     #if CXXNET_USE_CAFFE_ADAPTOR
