@@ -22,98 +22,112 @@ namespace mshadow {
       index_t ksize_y_;
       index_t ksize_x_;
       index_t kstride_;
-      index_t src_height_;
-      index_t src_width_;
-      DType p_keep_;
-      LocallyConnectedForwardExp(const SrcExp &src,const SrcExp&,
-        index_t ksize_y, index_t ksize_x, index_t kstride, DType p_keep)
-        : src_(src), mask_(mask),
-        ksize_y_(ksize_y), ksize_x_(ksize_x), kstride_(kstride), p_keep_(p_keep) {
-        Shape<srcdim> sshape = ShapeCheck<srcdim, SrcExp>::Check(src_);
-        Shape<srcdim> smshape = ShapeCheck<srcdim, MaskExp>::Check(mask_);
-        utils::Check(sshape == smshape, "Incorrect shape");
-        utils::Check(sshape[srcdim - 1] >= ksize_x && sshape[srcdim - 2] >= ksize_y,
-          "InsanityPoolingExp: kernel must be smaller than image");
-        this->src_height_ = sshape[srcdim - 2];
-        this->src_width_ = sshape[srcdim - 1];
-        this->shape_ = sshape;
-        this->shape_[srcdim - 2] = std::min(src_height_ - ksize_y + kstride - 1, src_height_ - 1) / kstride + 1,
-          this->shape_[srcdim - 1] = std::min(src_width_ - ksize_x + kstride - 1, src_width_ - 1) / kstride + 1;
+      index_t in_height_;
+      index_t in_width_;
+      index_t in_channels_;
+      LocallyConnectedForwardExp(const SrcExp &data_in,const SrcExp& wmat,
+        index_t ksize_y, index_t ksize_x, index_t kstride)
+        : data_in_(data_in), wmat_(wmat),
+        ksize_y_(ksize_y), ksize_x_(ksize_x), kstride_(kstride) {
+        Shape<srcdim> ishape = ShapeCheck<srcdim, SrcExp>::Check(data_in_);
+        Shape<srcdim> wshape = ShapeCheck<srcdim, SrcExp>::Check(wmat_);
+        utils::Check(ishape[srcdim - 1] >= ksize_x && ishape[srcdim - 2] >= ksize_y,
+          "LocallyConnectedForwardExp: kernel must be smaller than image");
+        utils::Check(wshape[srcdim - 1] == ksize_x*ksize_y,
+          "LocallyConnectedForwardExp: kernel size does not match weight");
+        utils::Check(wshape[srcdim - 3] == ishape[srcdim - 3],
+          "LocallyConnectedForwardExp: channel number does not match inputdata");
+        this->in_height_ = ishape[srcdim - 2];
+        this->in_width_ = ishape[srcdim - 1];
+        this->in_channels_ = ishape[srcdim - 3];
+        this->shape_[srcdim - 4] = wshape[srcdim - 3];
+        this->shape_[srcdim - 3] = ishape[srcdim - 3];
+        this->shape_[srcdim - 2] = (in_height_ - ksize_y) / kstride + 1;
+        this->shape_[srcdim - 1] = (in_width_ - ksize_x) / kstride + 1;
       }
-    }; // struct InsanityPoolingExp
-
-    template<typename Reducer, typename SrcExp, typename MaskExp, typename DType, int etype>
-    inline InsanityPoolingExp<Reducer, SrcExp, MaskExp, DType, ExpInfo<SrcExp>::kDim>
-      insanity_pool(const Exp<SrcExp, DType, etype> &src,
-      const Exp<MaskExp, DType, etype> &mask,
-      index_t ksize_y, index_t ksize_x, index_t kstride, DType p_keep) {
+    }; // struct LocallyConnectedForwardExp
+    /*!
+    * \brief multiply data_in and wmat within a subregion and sum together
+    * \param src source image, shape: (batch, channel, height, width)
+    * \param ksize_y kernel size in height
+    * \param ksize_x kernel size in width
+    * \param kstride stride for each kernel
+    * \return expression of LocallyConnectedForward result
+    * \tparam SrcExp source expression
+    * \tparam DType the content data type
+    * \tparam etype type of expression
+    */
+    template<typename SrcExp,typename DType, int etype>
+    inline LocallyConnectedForwardExp< SrcExp, DType, ExpInfo<SrcExp>::kDim>
+      LocallyConnectedForward(const Exp<SrcExp, DType, etype> &data_in, const Exp<SrcExp, DType, etype> &wmat,
+      index_t ksize_y, index_t ksize_x, index_t kstride) {
       TypeCheckPass<ExpInfo<SrcExp>::kDim >= 2>::Error_Expression_Does_Not_Meet_Dimension_Req();
-      return InsanityPoolingExp<Reducer, SrcExp, MaskExp, DType, ExpInfo<SrcExp>::kDim>
-        (src.self(), mask.self(), ksize_y, ksize_x, kstride, p_keep);
+      return LocallyConnectedForwardExp<SrcExp,DType, ExpInfo<SrcExp>::kDim>
+        (data_in.self(), wmat.self(), ksize_y, ksize_x, kstride);
     }
 
 
-    template<typename Reducer, typename SrcExp, typename MaskExp, typename DType, int srcdim>
-    struct Plan<InsanityPoolingExp<Reducer, SrcExp, MaskExp, DType, srcdim>, DType> {
+    template<typename SrcExp,typename DType, int srcdim>
+    struct Plan<LocallyConnectedForwardExp<SrcExp,  DType, srcdim>, DType> {
     public:
-      explicit Plan(const InsanityPoolingExp<Reducer, SrcExp, MaskExp, DType, srcdim> &e)
-        : src_(MakePlan(e.src_)),
-        mask_(MakePlan(e.mask_)),
+      explicit Plan(const LocallyConnectedForwardExp<SrcExp,DType, srcdim> &e)
+        : data_in_(MakePlan(e.data_in_)),
+        wmat_(MakePlan(e.wmat_)),
         ksize_y_(e.ksize_y_), ksize_x_(e.ksize_x_), kstride_(e.kstride_),
-        src_height_(e.src_height_), src_width_(e.src_width_),
-        new_height_(e.shape_[srcdim - 2]),
-        p_keep_(e.p_keep_), delta_((1.0f - e.p_keep_) / 4.0f) {}
+        in_height_(e.in_height_), in_width_(e.in_width_), in_channel_(e.in_channels_),
+        out_height_(e.shape_[srcdim - 2]), out_width_(e.shape_[srcdim - 1]), out_channel_(e.shape_[srcdim - 3]) {}
 
-      MSHADOW_XINLINE DType Eval(index_t i, index_t j) const {
+      MSHADOW_XINLINE DType Eval(index_t o_i, index_t o_j) const {
         using namespace std;
-        const index_t py = i % new_height_;
-        const index_t y_start = py * kstride_;
-        const index_t y_end = min(y_start + ksize_y_, src_height_);
-        const index_t px = j;
-        const index_t x_start = px * kstride_;
-        const index_t x_end = min(x_start + ksize_x_, src_width_);
-        const index_t c = i / new_height_;
+        //output: O.N O.C O.H | O.W
+        //            o_i     | o_j
+        //i = (o_n*O.C+o_c)*O.H+o_y = o_n*O.C*O.H + o_c*O.H + o_y
 
-        DType res; Reducer::SetInitValue(res);
-        for (index_t y = y_start; y < y_end; ++y) {
-          for (index_t x = x_start; x < x_end; ++x) {
-            index_t loc_y = y;
-            index_t loc_x = x;
-            DType flag = mask_.Eval(c * src_height_ + y, x);
-            if (flag < p_keep_) {
-              ;
+        const index_t o_n = o_i / (out_channel_*out_height_);
+        const index_t o_c = o_i / (out_height_)-o_n*out_channel_;
+        const index_t o_y = o_i - o_n*out_channel_*out_height_ - o_c*out_height_;
+        const index_t o_x = o_j;
+
+        //weight: O.C I.C O.H*O.W | K.H*K.W
+        //            w_i         |   w_j
+        // w_i = (o_c*I.C+i_c)*O.H*O.W+o_y*O.W+o_x = o_c*I.C*O.H*O.W+o_y*O.W+o_x  +  i_c*O.H*O.W
+        // w_j = (i_y-i_y_start)*K.W +(i_x-i_x_start)
+        const index_t o_area = out_height_*out_width_;
+        const index_t weight_offset = o_c*in_channel_*o_area + o_y*out_width_ + o_x;
+
+        //input : I.N I.C i.H | I.W 
+        //            i_i     | i_j
+        // i_i = (o_n*I.C+i_c)*I.H+i_y = o_n*I.C*I.H +i_c*I.H+i_y
+        const index_t in_offset = o_n*in_channel_*in_height_;
+        const index_t i_y_start = o_y * kstride_;
+        const index_t i_y_end = min(i_y_start + ksize_y_, in_height_);
+        const index_t i_x_start = o_x * kstride_;
+        const index_t i_x_end = min(i_x_start + ksize_x_, in_width_);
+
+        DType res=static_cast<DType>(0);
+        for (index_t i_y = i_y_start; i_y < i_y_end; ++i_y) {
+          for (index_t i_x = i_x_start; i_x < i_x_end; ++i_x) {
+            for (index_t i_c = 0; i_c < in_channel_; i_c++){
+              index_t i_i = in_offset+i_c*in_height_+i_y;
+              index_t w_i = weight_offset + i_c*o_area;
+              index_t w_j = (i_y-i_y_start)*ksize_x_+(i_x-i_x_start);
+              res+=data_in_.Eval(i_i,i_x)*wmat_.Eval(w_i,w_j);
             }
-            else if (flag < p_keep_ + delta_) {
-              loc_y = loc_y > 0 ? loc_y - 1 : loc_y;
-            }
-            else if (flag < p_keep_ + delta_ * 2.0f) {
-              loc_y = loc_y + 1 < src_height_ ? loc_y + 1 : src_height_ - 1;
-            }
-            else if (flag < p_keep_ + delta_ * 3.0f) {
-              loc_x = loc_x > 0 ? loc_x - 1 : loc_x;
-            }
-            else {
-              loc_x = loc_x + 1 < src_width_ ? loc_x + 1 : src_width_ - 1;
-            }
-            Reducer::Reduce(res, src_.Eval(c * src_height_ + loc_y, loc_x));
           }
         }
         return res;
       }
     private:
-      Plan<SrcExp, DType> src_;
-      Plan<MaskExp, DType> mask_;
+      Plan<SrcExp, DType> data_in_,wmat_;
       const index_t ksize_y_, ksize_x_, kstride_;
-      const index_t src_height_, src_width_;
-      const index_t new_height_;
-      const DType p_keep_;
-      const DType delta_;
+      const index_t in_channel_,in_height_, in_width_;
+      const index_t out_channel_,out_height_, out_width_;
     }; // struct Plan
 
   } // namespace expr
 } // namespace mshadow
 
-
+/*
 namespace mshadow {
   namespace expr {
 
@@ -227,7 +241,7 @@ namespace mshadow {
 
   } // namespace expr
 } // namespace mshadow
-
+*/
 namespace cxxnet {
 namespace layer {
 
@@ -294,11 +308,10 @@ class LocallyConnectedLayer : public ILayer<xpu> {
 	  const int ksize_x = param_.kernel_width;
 	  const int pad_y = param_.pad_y;
 	  const int pad_x = param_.pad_x;
-	  mshadow::Shape<2> pshape = nodes_out[0]->data[0][0].shape_;
-	  //nodes_out[0]->data = LocalConvolutionFoward(pad(nodes_in[0]->data, pad_y, pad_x), pshape, pad(wmat_, 0, 0), ksize_y, ksize_x, param_.stride);
+	  nodes_out[0]->data = LocallyConnectedForward(pad(nodes_in[0]->data, pad_y, pad_x), pad(wmat_, 0, 0), ksize_y, ksize_x, param_.stride);
     if (param_.no_bias == 0){
       for (size_t i = 0; i < nodes_out[0]->data.shape_[0]; i++){
-        nodes_out[0]->data.Slice(i, i + 1) += reshape(bias_, mshadow::Shape4(1, bias_shape_[0], bias_shape_[1], bias_shape_[2]);
+        nodes_out[0]->data.Slice(i, i + 1) += reshape(bias_, mshadow::Shape4(1, bias_shape_[0], bias_shape_[1], bias_shape_[2]));
       }
     }
   }
