@@ -272,37 +272,36 @@ namespace mshadow {
       LocallyConnectedBackpropData(const Exp<SrcExp, DType, etype> &data_in,
       const Exp<SrcExp, DType, etype> &data_out,
       index_t ksize_y, index_t ksize_x, index_t kstride) {
-      return LocallyConnectedBackpropWmatExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>
+      return LocallyConnectedBackpropDataExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>
         (data_in.self(), data_out.self(),
         ksize_y, ksize_x, kstride, p_keep);
     }
 
     template<typename SrcExp, typename DType, int srcdim>
-    struct Plan<LocallyConnectedBackpropWmatExp<SrcExp, DType, srcdim>, DType> {
+    struct Plan<LocallyConnectedBackpropDataExp<SrcExp, DType, srcdim>, DType> {
     public:
-      explicit Plan(const LocallyConnectedBackpropWmatExp<SrcExp, DType, srcdim> &e)
+      explicit Plan(const LocallyConnectedBackpropDataExp<SrcExp, DType, srcdim> &e)
         : data_in_(e.data_in_), data_out_(e.data_out_), num_channel_(e.num_channel_),
         in_shape_y_(e.in_shape_y_), in_shape_x_(e.in_shape_x_), in_channel_(e.in_channel_),
         out_shape_y_(e.out_shape_y_), out_shape_x_(e.out_shape_x_), out_channel_(e.out_channel_),
         ksize_y_(e.ksize_y_), ksize_x_(e.ksize_x_), kstride_(e.kstride_){}
-      MSHADOW_XINLINE DType Eval(index_t w_i, index_t w_j) const {
+      MSHADOW_XINLINE DType Eval(index_t i_i, index_t i_j) const {
         using namespace std;
-        // O.C I.C O.H*O.W | K.H*K.W
-        //     w_i         |   w_j
-        // w_i = (o_c*I.C+i_c)*O.H*O.W + o_y*O.W +o_x
-        // w_j = (i_y - i_y_start)*K.W + i_x - i_x_start;
-        const index_t o_area = out_shape_y_ * out_shape_x_;
-        const index_t o_x = w_i % out_shape_x_;
-        const index_t o_y = (w_i % o_area) / out_shape_x_;
-        const index_t i_c = (w_i / o_area) % in_channel_;
-        const index_t o_c = w_i / (in_channel_ * out_shape_y_ * out_shape_x_);
+        //input : I.N I.C i.H | I.W 
+        //            i_i     | i_j
+        // i_i = (i_n*I.C+i_c)*I.H+i_y = o_n*I.C*I.H +i_c*I.H+i_y
+        const index_t i_y = i_i % in_shape_y_;
+        const index_t i_c = (i_i / in_shape_y_) % in_channel_;
+        const index_t o_n = i_i / (in_channel_ * in_shape_y_);
         const index_t i_y_start = o_y * kstride_;
         const index_t i_x_start = o_x * kstride_;
         const index_t i_y = w_j / ksize_x_ + i_y_start;
         const index_t i_x = w_j % ksize_x_ + i_x_start;
-        //input : I.N I.C i.H | I.W 
-        //            i_i     | i_j
-        // i_i = (o_n*I.C+i_c)*I.H+i_y = o_n*I.C*I.H +i_c*I.H+i_y
+
+        // O.C I.C O.H*O.W | K.H*K.W
+        //     w_i         |   w_j
+        // w_i = (o_c*I.C+i_c)*O.H*O.W + o_y*O.W +o_x
+        // w_j = (i_y - i_y_start)*K.W + i_x - i_x_start;
         const index_t i_i_1 = in_channel_ * in_shape_y_;
         const index_t i_i_2 = i_c * in_shape_y_ + i_y;
         //output: O.N O.C O.H | O.W
