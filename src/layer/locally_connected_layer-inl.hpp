@@ -177,7 +177,7 @@ namespace mshadow {
       index_t ksize_y, index_t ksize_x, index_t kstride) {
       return LocallyConnectedBackpropWmatExp<SrcExp,DType, ExpInfo<SrcExp>::kDim>
         (data_in.self(), data_out.self(),
-        ksize_y, ksize_x, kstride, p_keep);
+        ksize_y, ksize_x, kstride);
     }
 
     template<typename SrcExp, typename DType, int srcdim>
@@ -246,9 +246,9 @@ namespace mshadow {
       index_t ksize_y_;
       index_t ksize_x_;
       index_t kstride_;
-      LocallyConnectedBackpropDataExp(const SrcExp &data_wmat_, const SrcExp &data_out, index_t in_shape_y, index_t in_shape_x,
+      LocallyConnectedBackpropDataExp(const SrcExp &data_wmat, const SrcExp &data_out, index_t in_shape_y, index_t in_shape_x,
         index_t ksize_y, index_t ksize_x, index_t kstride)
-        : data_in_(data_in), data_out_(data_out), ksize_y_(ksize_y), ksize_x_(ksize_x), kstride_(kstride){
+        : data_wmat_(data_wmat), data_out_(data_out), ksize_y_(ksize_y), ksize_x_(ksize_x), kstride_(kstride){
         Shape<srcdim> wshape = ShapeCheck<srcdim, SrcExp>::Check(data_wmat_);
         Shape<srcdim> oshape = ShapeCheck<srcdim, SrcExp>::Check(data_out_);
         utils::Check(in_shape_x >= ksize_x && in_shape_y >= ksize_y,
@@ -269,19 +269,19 @@ namespace mshadow {
 
     template<typename SrcExp, typename DType, int etype>
     inline LocallyConnectedBackpropDataExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>
-      LocallyConnectedBackpropData(const Exp<SrcExp, DType, etype> &data_in,
+      LocallyConnectedBackpropData(const Exp<SrcExp, DType, etype> &data_wmat,
       const Exp<SrcExp, DType, etype> &data_out,
       index_t ksize_y, index_t ksize_x, index_t kstride) {
       return LocallyConnectedBackpropDataExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>
-        (data_in.self(), data_out.self(),
-        ksize_y, ksize_x, kstride, p_keep);
+        (data_wmat.self(), data_out.self(),
+        ksize_y, ksize_x, kstride);
     }
 
     template<typename SrcExp, typename DType, int srcdim>
     struct Plan<LocallyConnectedBackpropDataExp<SrcExp, DType, srcdim>, DType> {
     public:
       explicit Plan(const LocallyConnectedBackpropDataExp<SrcExp, DType, srcdim> &e)
-        : data_in_(e.data_in_), data_out_(e.data_out_), num_channel_(e.num_channel_),
+        : wmat_(e.data_wmat_), data_out_(e.data_out_), num_channel_(e.num_channel_),
         in_shape_y_(e.in_shape_y_), in_shape_x_(e.in_shape_x_), in_channel_(e.in_channel_),
         out_shape_y_(e.out_shape_y_), out_shape_x_(e.out_shape_x_), out_channel_(e.out_channel_),
         ksize_y_(e.ksize_y_), ksize_x_(e.ksize_x_), kstride_(e.kstride_){}
@@ -291,34 +291,43 @@ namespace mshadow {
         //            i_i     | i_j
         // i_i = (i_n*I.C+i_c)*I.H+i_y = o_n*I.C*I.H +i_c*I.H+i_y
         const index_t i_y = i_i % in_shape_y_;
+        const index_t i_x = i_j;
         const index_t i_c = (i_i / in_shape_y_) % in_channel_;
         const index_t o_n = i_i / (in_channel_ * in_shape_y_);
-        const index_t i_y_start = o_y * kstride_;
-        const index_t i_x_start = o_x * kstride_;
-        const index_t i_y = w_j / ksize_x_ + i_y_start;
-        const index_t i_x = w_j % ksize_x_ + i_x_start;
-
+        const index_t o_y_start = max(i_y + 1 - ksize_y_, 0) / kstride_;//take i_y as i_y_end
+        const index_t o_y_end = i_y / kstride_;//take i_y as i_y_start
+        const index_t o_x_start = max(i_x+1-ksize_x_ , 0) / kstride_;//take i_x as i_x_end
+        const index_t o_x_end = i_x / kstride_;//take i_x as i_x_start
+        
+        const index_t o_area = out_shape_y_ *out_shape_x_;
         // O.C I.C O.H*O.W | K.H*K.W
         //     w_i         |   w_j
-        // w_i = (o_c*I.C+i_c)*O.H*O.W + o_y*O.W +o_x
-        // w_j = (i_y - i_y_start)*K.W + i_x - i_x_start;
-        const index_t i_i_1 = in_channel_ * in_shape_y_;
-        const index_t i_i_2 = i_c * in_shape_y_ + i_y;
+        // w_i = (o_c*I.C+i_c)*O.H*O.W + o_y*O.W +o_x = o_c*I.C*O.H*O.W +i_c*O.H*O.W +o_y*O.W+o_x
+        // w_j = (i_y - i_y_start)*K.W + i_x - i_x_start = 
+        const index_t w_i_0 = in_channel_ * o_area;
+        const index_t w_i_1 = i_c * o_area;
         //output: O.N O.C O.H | O.W
         //            o_i     | o_j
         //i = (o_n*O.C+o_c)*O.H+o_y = o_n*O.C*O.H + o_c*O.H + o_y
-        const index_t o_i_1 = out_channel_ * out_shape_y_;
-        const index_t o_i_2 = o_c * out_shape_y_ + o_y;
+        const index_t o_i_1 = o_n * out_channel_ * out_shape_y_;
         DType val = static_cast<DType>(0);
-        for (index_t i_n = 0; i_n < num_channel_; ++i_n){
-          index_t i_i = i_n * i_i_1 + i_i_2;
-          index_t o_i = i_n * o_i_1 + o_i_2;
-          val += data_out_.Eval(o_i, o_x)*data_in_.Eval(i_i, i_x);
+        for (index_t o_c = 0; o_c < out_channel_; o_c++){
+          index_t o_i_2 = o_c * out_shape_y_;
+          index_t w_i_2 = o_c * w_i_0;
+          for (index_t o_y = o_y_start; o_y >= o_y_end; o_y--){
+            index_t o_i = o_i_1 + o_i_2 + o_y;
+            index_t w_i_3 = o_y * out_shape_x_;
+            for (index_t o_x = o_x_start; o_x >= o_x_end; o_x--){
+              index_t w_i = w_i_2 + w_i_1 + w_i_3 + o_x;
+              index_t w_j = ( o_y_start - o_y ) * kstride_ * ksize_x_ + (o_x_start - o_x) * kstride_ ;
+              val += data_out_.Eval(o_i, o_x) * wmat_.Eval(w_i, w_j);
+            }
+          }
         }
         return val;
       }
     private:
-      Plan<SrcExp, DType> data_in_, data_out_;
+      Plan<SrcExp, DType> wmat_, data_out_;
       const index_t in_channel_, in_shape_y_, in_shape_x_;
       const index_t out_channel_, out_shape_y_, out_shape_x_;
       const index_t ksize_y_, ksize_x_;
