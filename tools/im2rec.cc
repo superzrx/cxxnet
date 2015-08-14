@@ -20,7 +20,7 @@
 #include <dmlc/recordio.h>
 #include <opencv2/opencv.hpp>
 #include "../src/io/image_recordio.h"
-
+#include<fstream>
 int main(int argc, char *argv[]) {
   if (argc < 4) {
     printf("Usage: <image.lst> <image_root_dir> <output.rec> [additional parameters in form key=value]\n"\
@@ -56,6 +56,17 @@ int main(int argc, char *argv[]) {
   cxxnet::ImageRecordIO rec;
   size_t imcnt = 0;
   double tstart = dmlc::GetTime();
+  //check file with \r
+  std::ifstream check_ifs(argv[1],std::ios::binary);
+  CHECK(check_ifs) << "open file fail:" << argv[1];
+  char check_c;
+  while (check_ifs.get(check_c)){
+    if (check_c == '\r'){
+      LOG(INFO) << "Input list contains \\r, please remove it";
+      return 0;
+    }
+  }
+  check_ifs.close();
   dmlc::InputSplit *flist = dmlc::InputSplit::
       Create(argv[1], partid, nsplit, "text");  
   std::ostringstream os;
